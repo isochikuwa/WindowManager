@@ -5,34 +5,63 @@
    version = "2.0">
    <Breakpoints>
       <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.SymbolicBreakpoint">
+         <BreakpointContent
+            uuid = "90443D95-09B3-4D25-8552-B4BCA5F060F5"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            symbolName = "&lt;#symbol#&gt;"
+            moduleName = "">
+            <Locations>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "E40DD9A0-DBF9-4012-B98D-EB72B887B39F"
+            uuid = "174DF76D-556B-4EE1-BF2B-6E959B236464"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WindowManager/WindowManagerApp.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "142"
-            endingLineNumber = "142"
-            landmarkName = "getWindowScreen(window:)"
+            startingLineNumber = "166"
+            endingLineNumber = "166"
+            landmarkName = "setWindowPosition(xFactor:yFactor:widthFactor:heightFactor:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "238F874D-F62F-4E95-8CD5-F99B99EC1ADD"
+            uuid = "27AB030D-1AF7-4F61-B71A-B3F2791A7CCC"
             shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "WindowManager/WindowManagerApp.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "137"
-            endingLineNumber = "137"
-            landmarkName = "getWindowScreen(window:)"
+            startingLineNumber = "181"
+            endingLineNumber = "181"
+            landmarkName = "setWindowPosition(xFactor:yFactor:widthFactor:heightFactor:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "BAC04A0A-4682-49CD-9433-F1E955A462BE"
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "WindowManager/WindowManagerApp.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "184"
+            endingLineNumber = "184"
+            landmarkName = "setWindowPosition(xFactor:yFactor:widthFactor:heightFactor:)"
             landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>

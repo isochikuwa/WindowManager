@@ -28,7 +28,10 @@ class HotKeyManager: ObservableObject {
     var topRightHotKey: HotKey?
     var bottomLeftHotKey: HotKey?
     var bottomRightHotKey: HotKey?
+    var prevHotKey: HotKey?
+    var nextHotKey: HotKey?
 
+    
     init() {
         // Ctrl + Option + 左矢印
         leftHotKey = HotKey(key: .leftArrow, modifiers: [.control, .option])
@@ -71,12 +74,26 @@ class HotKeyManager: ObservableObject {
             print("Global Shortcut Pressed!")
             self.moveActiveWindowBottomRight()
         }
-
+        
         // Ctrl + Option + Enter
         maximizeHotKey = HotKey(key: .return, modifiers: [.control, .option])
         maximizeHotKey?.keyDownHandler = {
             print("Global Shortcut Pressed!")
             self.maximizeWindow()
+        }
+        
+        // Ctrl + Option + P
+        prevHotKey = HotKey(key: .p, modifiers: [.control, .option])
+        prevHotKey?.keyDownHandler = {
+            print("Global Shortcut Pressed!")
+            self.setWindowNextScreen(fn: { (i) -> Int in return i + 1 < NSScreen.screens.count ? i + 1 : 0 })
+        }
+        
+        // Ctrl + Option + N
+        nextHotKey = HotKey(key: .n, modifiers: [.control, .option])
+        nextHotKey?.keyDownHandler = {
+            print("Global Shortcut Pressed!")
+            self.setWindowNextScreen(fn: { (i) -> Int in return i - 1 >= 0 ? i - 1 : NSScreen.screens.count - 1 })
         }
 
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String : true]
@@ -88,13 +105,13 @@ class HotKeyManager: ObservableObject {
     
     func moveActiveWindowLeft() { setWindowPosition(xFactor: 0, yFactor: 0, widthFactor: 0.5, heightFactor: 1) }
     func moveActiveWindowRight() { setWindowPosition(xFactor: 0.5, yFactor: 0, widthFactor: 0.5, heightFactor: 1) }
-    func moveActiveWindowTopLeft() { setWindowPosition(xFactor: 0, yFactor: 0, widthFactor: 0.5, heightFactor: 0.5) }
-    func moveActiveWindowTopRight() { setWindowPosition(xFactor: 0.5, yFactor: 0, widthFactor: 0.5, heightFactor: 0.5) }
-    func moveActiveWindowBottomLeft() { setWindowPosition(xFactor: 0, yFactor: 0.5, widthFactor: 0.5, heightFactor: 0.5) }
-    func moveActiveWindowBottomRight() { setWindowPosition(xFactor: 0.5, yFactor: 0.5, widthFactor: 0.5, heightFactor: 0.5) }
+    func moveActiveWindowTopLeft() { setWindowPosition(xFactor: 0, yFactor: 0.5, widthFactor: 0.5, heightFactor: 0.5) }
+    func moveActiveWindowTopRight() { setWindowPosition(xFactor: 0.5, yFactor: 0.5, widthFactor: 0.5, heightFactor: 0.5) }
+    func moveActiveWindowBottomLeft() { setWindowPosition(xFactor: 0, yFactor: 0, widthFactor: 0.5, heightFactor: 0.5) }
+    func moveActiveWindowBottomRight() { setWindowPosition(xFactor: 0.5, yFactor: 0, widthFactor: 0.5, heightFactor: 0.5) }
     func maximizeWindow() { setWindowPosition(xFactor: 0, yFactor: 0, widthFactor: 1, heightFactor: 1) }
 
-
+    
     private func getCurrentWindow() -> AXUIElement? {
         guard let frontApp = NSWorkspace.shared.frontmostApplication else {
             print("No active app")
@@ -110,56 +127,92 @@ class HotKeyManager: ObservableObject {
         return (result == .success) ? (frontWindow as! AXUIElement) : nil
     }
     
-    private func getWindowScreen(window: AXUIElement) -> NSScreen? {
+    private func getWindowScreenIndex(window: AXUIElement) -> Int {
         var positionValue: AnyObject?
         var sizeValue: AnyObject?
 
         let posResult = AXUIElementCopyAttributeValue(window, kAXPositionAttribute as CFString, &positionValue)
         let sizeResult = AXUIElementCopyAttributeValue(window, kAXSizeAttribute as CFString, &sizeValue)
 
-        guard posResult == .success, sizeResult == .success,
-              let axPoint = positionValue, let axSize = sizeValue else {
-            return NSScreen.main
+        guard posResult == .success, sizeResult == .success else {
+            return 0
         }
+        let axPoint = positionValue as! AXValue
+        let axSize = sizeValue as! AXValue
 
         var point = CGPoint.zero
         var size = CGSize.zero
-        AXValueGetValue(axPoint as! AXValue, .cgPoint, &point)
-        AXValueGetValue(axSize as! AXValue, .cgSize, &size)
-
-        // ウィンドウ中心座標を計算
-        let center = CGPoint(x: point.x + size.width/2, y: point.y + size.height/2)
+        AXValueGetValue(axPoint, .cgPoint, &point)
+        AXValueGetValue(axSize, .cgSize, &size)
+        
+        let currentPoint = convertPoint(point: point, size: size)
+        let center = CGPoint(x: currentPoint.x + size.width / 2, y: currentPoint.y + size.height / 2)
 
         // 複数スクリーンの中で中心があるスクリーンを返す
-        for screen in NSScreen.screens {
-            print("screen: \(screen)")
-            if screen.visibleFrame.contains(center) {
-                print("detected: \(screen)")
-                return screen
+        for (i, screen) in NSScreen.screens.enumerated() {
+            if screen.frame.contains(center) {
+                print("screen detected: \(screen)")
+                return i
             }
         }
 
-        return NSScreen.main
+        return 0
+    }
+
+    private func getWindowScreen(window: AXUIElement) -> NSScreen? {
+        return NSScreen.screens[getWindowScreenIndex(window: window)]
     }
     
     private func setWindowPosition(xFactor: CGFloat, yFactor: CGFloat, widthFactor: CGFloat, heightFactor: CGFloat) {
         guard let window = getCurrentWindow(), let screen = getWindowScreen(window: window) else {
             return
         }
-
+        
         let screenFrame = screen.frame
         
         let newWidth = screenFrame.width * widthFactor
         let newHeight = screenFrame.height * heightFactor
-        let newX = screenFrame.minX + screenFrame.width * xFactor
-        let newY = screenFrame.minY + screenFrame.height * yFactor
+        let newX = screenFrame.origin.x + screenFrame.width * xFactor
+        let newY = screenFrame.origin.y + screenFrame.height * yFactor
         
         var newSize = CGSize(width: newWidth, height: newHeight)
-        var newPosition = CGPoint(x: newX, y: newY)
+        var newPosition = convertPoint(point: CGPoint(x: newX, y: newY), size: newSize)
 
         AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, AXValueCreate(.cgPoint, &newPosition)!)
         AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, AXValueCreate(.cgSize, &newSize)!)
         
-        print("Moved window: x=\(newX), y=\(newY), width=\(newWidth), height=\(newHeight) on screen \(screen)")
+        print("Moved window: x=\(newPosition.x), y=\(newPosition.y), width=\(newWidth), height=\(newHeight)")
+    }
+    
+    private func setWindowNextScreen(fn: (Int) -> Int) {
+        guard let window = getCurrentWindow() else {
+            return
+        }
+        
+        let screenIndex = getWindowScreenIndex(window: window)
+        let nextIndex = fn(screenIndex)
+        let nextFrame = NSScreen.screens[nextIndex].frame
+        
+        let newWidth = nextFrame.width
+        let newHeight = nextFrame.height
+        let newX = nextFrame.origin.x
+        let newY = nextFrame.origin.y
+        
+        var newSize = CGSize(width: newWidth, height: newHeight)
+        var newPosition = convertPoint(point: CGPoint(x: newX, y: newY), size: newSize)
+
+        AXUIElementSetAttributeValue(window, kAXPositionAttribute as CFString, AXValueCreate(.cgPoint, &newPosition)!)
+        AXUIElementSetAttributeValue(window, kAXSizeAttribute as CFString, AXValueCreate(.cgSize, &newSize)!)
+        
+        print("Moved window: x=\(newPosition.x), y=\(newPosition.y), width=\(newWidth), height=\(newHeight)")
+    }
+    
+    private func convertPoint(point: CGPoint, size: CGSize) -> CGPoint {
+        // AX.y = メインモニタ縦 - (CGPoint.y + CGSize.height)
+        let mainScreen = NSScreen.screens[0].frame
+        let convertedY = mainScreen.height - (CGFloat(point.y) + CGFloat(size.height))
+        let newPoint = CGPoint(x: point.x, y: convertedY)
+        
+        return newPoint
     }
 }
