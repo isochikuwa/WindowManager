@@ -10,15 +10,11 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            Text("Press Command+Option+LeftArrow to move window left")
+            Button("Quit") {
+                NSApplication.shared.terminate(nil)
+            }
         }
         .padding()
     }
-}
-
-#Preview {
-    ContentView()
 }
