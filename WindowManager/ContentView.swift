@@ -25,7 +25,6 @@ struct ContentView: View {
                 Text("Ctrl+Opt+P : Next screen")
                 Text("Ctrl+Opt+N : Previous screen")
             }
-            .font(.system(size: 11, family: .monospaced))
             .foregroundColor(.secondary)
             
             Divider()
